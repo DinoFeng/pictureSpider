@@ -149,7 +149,7 @@ const tools = {
       })
       writer.on('finish', () => {
         log.trace('streamToFile: writer finish')
-        resolve()
+        resolve(fullFileName)
       })
       writer.on('error', reject)
     })
@@ -164,10 +164,10 @@ const tools = {
       })
       stream.on('end', () => {
         const buffer = Buffer.concat(chunks)
-        if (encoding.toLowerCase() !== 'buffer') {
-          resolve(iconv.decode(buffer, encoding || 'utf8'))
-        } else {
+        if (encoding && encoding.toLowerCase() === 'buffer') {
           resolve(buffer)
+        } else {
+          resolve(iconv.decode(buffer, encoding || 'utf8'))
         }
       })
       stream.on('error', reject)

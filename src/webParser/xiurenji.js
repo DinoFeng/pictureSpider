@@ -6,7 +6,7 @@ const baseInterface = require('./iWebParser')
 // https://www.xiurenji.com/  // score:9
 
 const parseUrlKindAndId = (url, log) => {
-  const reg = /https:\/\/\w+\.\w+\.\w+\/(\w+)\/([A-Za-z]*|[A-Za-z]+_)(\d+)(|_\d*)\.html/ig
+  const reg = /https:\/\/\w+\.\w+\.\w+\/(\w+)\/([A-Za-z]*|[A-Za-z]+_)(\d+)(|_\d*)\.html/gi
   const matchs = reg.exec(url)
   // log && log.trace(matchs)
   if (matchs) {
@@ -24,24 +24,26 @@ class XRJi extends baseInterface {
     return 'E:\\xiurenji'
   }
 
-  get encoding() {
-    // return 'GB2312'
-  }
+  // get encoding() {
+  //   return 'GB2312'
+  // }
 
   get parseImageSelector() {
     // return '.img p>img'
-    return '.img img'
+    return '.content p>img[src]'
   }
 
   get catalogSelector() {
-    return '.tp2 .dan a:has(img)'
+    // return '.tp2 .dan a:has(img)'
+    return 'ul.update_area_lists li.i_list a:has(img)'
   }
 
   get entryPageConfig() {
     return {
       hostUrl: `https://${this.curHost}`, //  'https://www.xiurenji.cc',
       defaultPatten: 'index',
-      catalogs: { // page_${page}
+      catalogs: {
+        // page_${page}
         XiuRen: { maxPage: 5 }, // Done
         MFStar: { maxPage: 5 }, // Done
         MiStar: { maxPage: 5 }, // Done
@@ -71,7 +73,7 @@ class XRJi extends baseInterface {
 
   async parsePicPageUrl(content) {
     // const log = this[_log]
-    const numberSelector = '.page>a'
+    const numberSelector = '.page>a[href]'
     const spans = await tools.getElements(content, numberSelector)
     const result = new Set()
     await Promise.all(
@@ -88,7 +90,7 @@ class XRJi extends baseInterface {
       }),
     )
     // .then(res => _.max(res))
-    return Array.from(result)// new Set(res.filter(v => v)))
+    return Array.from(result) // new Set(res.filter(v => v)))
     // return Array.from(new Set(res.filter(v => v)))
   }
 
@@ -96,14 +98,15 @@ class XRJi extends baseInterface {
     const selector = '.common strong>a'
     const eles = await tools.getElements(content, selector)
     if (eles && eles.length > 0) {
-      const r = await Promise.all(eles.map((index, ele) =>
-        tools.getElementText(ele)
-          .then(res => {
+      const r = await Promise.all(
+        eles.map((index, ele) =>
+          tools.getElementText(ele).then((res) => {
             // this.log.trace(ele)
             // this.log.trace({ 'a.text': res })
             return res.includes('错') ? 1 : 0
           }),
-      )).then(res => _.max(res))
+        ),
+      ).then((res) => _.max(res))
       return r > 0
     } else {
       return false
@@ -117,8 +120,8 @@ class XRJi extends baseInterface {
     this.log.debug({ kind, cat, page })
     const [is404, images] = await Promise.all([
       this.is404(content),
-      this.parsePicUrl(content)
-        .then(imgs => imgs.map(({ src, alt }, index) => {
+      this.parsePicUrl(content).then((imgs) =>
+        imgs.map(({ src, alt }, index) => {
           if (src) {
             const folder = this.outputFolder
             const fullId = id.length > 4 ? tools.padLeft(id, 5) : tools.padLeft(id, 4)
@@ -132,18 +135,15 @@ class XRJi extends baseInterface {
           } else {
             return null
           }
-        })),
+        }),
+      ),
     ])
-    return { is404, images: images.filter(v => v) }
+    return { is404, images: images.filter((v) => v) }
   }
 
   async getTotalPicPageUrl(url, timeout) {
     const { content } = await this.getPicPageContent(url, timeout)
-    const [is404, pages] = await Promise.all([
-      this.is404(content),
-      this.parsePicPageUrl(content)
-        .then(res => res.map(r => new URL(r, url).href)),
-    ])
+    const [is404, pages] = await Promise.all([this.is404(content), this.parsePicPageUrl(content).then((res) => res.map((r) => new URL(r, url).href))])
     return { is404, pages }
   }
 
@@ -159,13 +159,14 @@ class XRJi extends baseInterface {
     const { content } = await this.getPicPageContent(url, timeout)
     const [is404, pages] = await Promise.all([
       this.is404(content),
-      this.parseCatalogPage(content)
-        .then(pages => pages.map(({ href, title }) => {
+      this.parseCatalogPage(content).then((pages) =>
+        pages.map(({ href, title }) => {
           const urlObject = new URL(href, url)
           const host = urlObject.host
           const { kind, cat: pageId } = parseUrlKindAndId(urlObject.href)
           return { href: urlObject.href, title, host, kind, pageId }
-        })),
+        }),
+      ),
     ])
     return { is404, pages }
   }

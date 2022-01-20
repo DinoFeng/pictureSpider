@@ -13,8 +13,9 @@ class DownloadImageWorker extends BaseWorkman {
     if (folder && (picUrl || fileName)) {
       const timeout = retry ? 2 * baseTimeout : baseTimeout
       const proxy = retry && tools.checkProxy()
-      await tools.saveUrlToFile(picUrl, { timeout, headers, proxy }, { folder, fileName, extName, timeout })
-      return { data: downloadInfo, nextWorker: 'CheckImageWorker' }
+      const filePath = await tools.saveUrlToFile(picUrl, { timeout, headers, proxy }, { folder, fileName, extName, timeout })
+      // return { data: downloadInfo, nextWorker: 'CheckImageWorker' }
+      return { data: { filePath }, nextWorker: 'CheckImageWorker' }
     } else {
       this.log.fatal(`${taskId} Process done. Input data ${JSON.stringify(input)} is invalid.`)
       return null
