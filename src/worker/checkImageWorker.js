@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const path = require('path')
+// const path = require('path')
 const BaseWorkman = require('./iWorkman')
 const tools = require('../util/tools')
 
@@ -35,14 +35,15 @@ class CheckImageWorker extends BaseWorkman {
         if (repository) {
           const {
             data: {
-              fileName,
+              filePath,
+              // fileName,
               folder,
               picUrl,
               headers: { Referer },
               sourcePage,
             },
           } = input || {}
-          const fullName = `${folder}\\${fileName}${path.extname(picUrl)}`
+          const fullName = filePath // `${folder}\\${fileName}${path.extname(picUrl)}`
           await repository.save({ fullName, folder, referer: Referer, picUrl, sourcePage })
         }
         return { data: null }
