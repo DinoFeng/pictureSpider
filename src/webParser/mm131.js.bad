@@ -21,11 +21,11 @@ class MM131 extends baseInterface {
   // }
 
   get curHost() {
-    return 'www.xxxxx.net' // 网址
+    return 'www.mm131.net'
   }
 
   get outputFolder() {
-    return 'E:\\mm'
+    return 'E:\\mm131'
   }
 
   get encoding() {

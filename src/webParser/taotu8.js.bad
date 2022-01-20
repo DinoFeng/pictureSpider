@@ -1,0 +1,95 @@
+const _ = require('lodash')
+const path = require('path')
+const URL = require('url').URL
+const tools = require('../util/tools')
+const baseInterface = require('./iWebParser')
+// https://www.192td.com/  // score:7
+
+const parseUrlKindAndId = (url, log) => {
+  const reg = /https:\/\/www\.192td\.com\/(\S+)\/(\S+)\/(\S[^_]+)(|_\d*)\.html/ig
+  const matchs = reg.exec(url)
+  if (matchs) {
+    const [, catalog, kind, id, sid] = matchs
+    log && log.trace({ catalog, kind, id, sid })
+    return { catalog, kind, id, sid }
+  }
+}
+
+class TaoTu8 extends baseInterface {
+  get curHost() {
+    return 'www.192td.com'
+  }
+
+  get outputFolder() {
+    return 'E:\\192td'
+  }
+
+  get encoding() {
+    return ''
+  }
+
+  get parseImageSelector() {
+    return '.picsboxcenter>center>img'
+  }
+
+  get catalogSelector() {
+    return '.piclist a:has(img)'
+  }
+
+  get catalogTitleSelector() {
+    return { selector: '>img', attr: 'alt' }
+  }
+
+  get entryPageConfig() { }
+
+  async parseTotalNumber(content) {
+    const selector = '#allnum'
+    const numberSpan = await tools.getElements(content, selector)
+    if (numberSpan && numberSpan.length > 0) {
+      const number = await tools.getElementText(numberSpan[0])
+      return _.toNumber(number)
+    }
+  }
+
+  async parsePicUrl(content) {
+    const imgSelector = this.parseImageSelector
+    const imgs = await tools.getElements(content, imgSelector)
+    return await Promise.all(
+      imgs.map(async (index, img) => {
+        const { lazysrc: src, alt } = await tools.getElementAttribute(img, ['lazysrc', 'alt'])
+        return { src, alt }
+      }),
+    )
+  }
+
+  async getPicUrlFromPicPage(url, timeout) {
+    const { is404, images } = await super.getPicUrlFromPicPage(url, timeout)
+    return {
+      is404,
+      images: images.map(({ alt, picUrl, folder, headers }, index) => {
+        const { catalog, kind, id, sid } = parseUrlKindAndId(url, this.log)
+        return {
+          picUrl,
+          folder: path.join(folder, catalog, kind, id),
+          fileName: `${_.trim(alt.replace(/([\\/:*?<>|"]+)/gi, ' '))}${sid || '_1'}_${index}`,
+          headers,
+        }
+      }),
+    }
+  }
+
+  async getCatalogPages(url, timeout) {
+    const { is404, pages } = await super.getCatalogPages(url, timeout)
+    return {
+      is404,
+      pages: pages.map(({ href, title }) => {
+        const urlObject = new URL(href, url)
+        const host = urlObject.host
+        const { catalog, kind, id: pageId } = parseUrlKindAndId(urlObject.href)
+        return { href: urlObject.href, title, host, kind: `${catalog}_${kind}`, pageId }
+      }),
+    }
+  }
+}
+
+module.exports = TaoTu8

@@ -3,7 +3,7 @@ const path = require('path')
 const axios = require('axios')
 // const axios = require('axios-https-proxy-fix')
 const https = require('https')
-const HttpsProxyAgent = require('https-proxy-agent')
+// const HttpsProxyAgent = require('https-proxy-agent')
 const _ = require('lodash')
 const iconv = require('iconv-lite')
 const jd = require('jsdom')
@@ -12,10 +12,10 @@ const uuidV1 = require('uuid').v1
 
 const { logger } = require('./logger')
 const A_MOMENT = 3000 // 3秒
-const PROXY = {
-  host: '127.0.0.1',
-  port: '7777',
-}
+// const PROXY = {
+//   host: '127.0.0.1',
+//   port: '7777',
+// }
 
 const parseExtName = (extName) => {
   const reg = /^(\.\w+).*$/gi
@@ -45,9 +45,10 @@ const tools = {
   },
 
   async checkProxy() {
-    const agent1 = new HttpsProxyAgent(PROXY)
+    // const agent1 = new HttpsProxyAgent(PROXY)
     const agent2 = new https.Agent({ rejectUnauthorized: false })
-    const agent = agent1 && agent2 ? _.merge({}, agent1, agent2) : agent1 || agent2
+    // const agent = agent1 && agent2 ? _.merge({}, agent1, agent2) : agent1 || agent2
+    const agent = agent2
     const request = {
       headers: {
         'Cache-Control': 'no-cache',
@@ -70,9 +71,10 @@ const tools = {
   async accessUrl(url, requestOptions, l) {
     const log = l || logger
     const { proxy } = requestOptions || {}
-    const agent1 = proxy ? new HttpsProxyAgent(PROXY) : undefined
+    // const agent1 = proxy ? new HttpsProxyAgent(PROXY) : undefined
     const agent2 = proxy ? new https.Agent({ rejectUnauthorized: false }) : undefined
-    const agent = agent1 && agent2 ? _.merge({}, agent1, agent2) : agent1 || agent2
+    // const agent = agent1 && agent2 ? _.merge({}, agent1, agent2) : agent1 || agent2
+    const agent = agent2
     const request = _.merge(
       {
         timeout: A_MOMENT,

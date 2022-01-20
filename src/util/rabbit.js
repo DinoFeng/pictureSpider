@@ -1,9 +1,11 @@
 const amqp = require('amqplib')
 const _ = require('lodash')
+const { log4js } = require('./logger')
 
 const _connection = Symbol('_connection')
 const _hostName = Symbol('_hostName')
 const _mqAddress = Symbol('_mqAddress')
+const logger = log4js.getLogger('Rabbit')
 class Rabbit {
   constructor({ address, hostName }) {
     this[_hostName] = hostName
@@ -35,7 +37,9 @@ class Rabbit {
   // }
 
   static async createConnection({ address, hostName }) {
-    return amqp.connect(address, { clientProperties: { connection_name: hostName } })
+    const conn = await amqp.connect(address, { clientProperties: { connection_name: hostName } })
+    conn.on('error', (error) => { logger.error(error) })
+    return conn
   }
 
   static async getBalanceQueue(queueList, channel, logger) {

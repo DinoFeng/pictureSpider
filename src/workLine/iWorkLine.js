@@ -146,7 +146,21 @@ class BaseWorkLine {
 
   async deadLineHandling(msg, error, taskId) {
     const { name, message, stack, config } = error
-    this.log.mark(JSON.stringify({ msgContent: msg.content.toString(), error: { name, message, stack, config } }))
+    let cache = []
+    const markMSG = JSON.stringify({
+      msgContent: msg.content.toString(),
+      error: { name, message, stack, config },
+    }, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (cache.indexOf(value) !== -1) {
+          return
+        }
+        cache.push(value)
+      }
+      return value
+    })
+    cache = null
+    this.log.mark(markMSG)
   }
 
   parseMessageContent(msg) {
